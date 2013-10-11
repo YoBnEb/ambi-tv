@@ -138,9 +138,9 @@ ambitv_lpd8806_commit_outputs(struct ambitv_sink_component* component)
       (struct ambitv_lpd8806_priv*)component->priv;
       
    if (lpd8806->fd >= 0) {
-      ret = write(lpd8806->fd, lpd8806->grb, lpd8806->grblen+1);
+      ret = write(lpd8806->fd, lpd8806->grb, lpd8806->grblen);
       
-      if (ret != lpd8806->grblen+1) {
+      if (ret != lpd8806->grblen) {
          if (ret <= 0)
             ret = -errno;
          else 
@@ -167,7 +167,7 @@ ambitv_lpd8806_clear_leds(struct ambitv_sink_component* component)
       // send 3 times, in case there's noise on the line,
       // so that all LEDs will definitely be off afterwards.
       for (i=0; i<3; i++) {
-         memset(lpd8806->grb, 0x80, lpd8806->grblen);
+         memset(lpd8806->grb, 0, lpd8806->grblen);
          (void)ambitv_lpd8806_commit_outputs(component);
       }
    }
@@ -193,8 +193,8 @@ ambitv_lpd8806_set_output_to_rgb(
       if (lpd8806->num_bbuf) {
          unsigned char* acc = lpd8806->bbuf[lpd8806->bbuf_idx];
          
-         acc[3 * ii]             = g;
-         acc[3 * ii + 1]         = r;
+         acc[3 * ii]             = r;
+         acc[3 * ii + 1]         = g;
          acc[3 * ii + 2]         = b;
          
          r = g = b = 0;
@@ -214,9 +214,9 @@ ambitv_lpd8806_set_output_to_rgb(
             *rgb[i] = ambitv_color_map_with_lut(lpd8806->gamma_lut[i], *rgb[i]);
       }
       
-      lpd8806->grb[3 * ii]       = g >> 1 | 0x80;
-      lpd8806->grb[3 * ii + 1]   = r >> 1 | 0x80;
-      lpd8806->grb[3 * ii + 2]   = b >> 1 | 0x80;
+      lpd8806->grb[3 * ii]       = g;
+      lpd8806->grb[3 * ii + 1]   = r;
+      lpd8806->grb[3 * ii + 2]   = b;
       
       ret = 0;
    }
@@ -554,7 +554,7 @@ ambitv_lpd8806_create(const char* name, int argc, char** argv)
          goto errReturn;
       
       priv->grblen   = sizeof(unsigned char) * 3 * priv->actual_num_leds;
-      priv->grb      = (unsigned char*)malloc(priv->grblen+1);
+      priv->grb      = (unsigned char*)malloc(priv->grblen);
       
       if (priv->num_bbuf > 1) {
          priv->bbuf = (unsigned char**)malloc(sizeof(unsigned char*) * priv->num_bbuf);

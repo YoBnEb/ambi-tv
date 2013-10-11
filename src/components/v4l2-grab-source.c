@@ -234,11 +234,17 @@ ambitv_v4l2_grab_init_device(struct v4l2_grab* grabber)
       return -EINVAL;
    }
    
-   grabber->width          = vid_fmt.fmt.pix.width;
-   grabber->height         = vid_fmt.fmt.pix.height;
+   grabber->width          = vid_fmt.fmt.pix.width = 720;
+   grabber->height         = vid_fmt.fmt.pix.height = 576;
    grabber->bytesperline   = vid_fmt.fmt.pix.bytesperline;
    grabber->fmt            = v4l2_to_ambitv_video_format(vid_fmt.fmt.pix.pixelformat);
    
+   ret = xioctl(grabber->fd, VIDIOC_S_FMT, &vid_fmt);
+   if (ret < 0) {
+      ambitv_log(ambitv_log_error, LOGNAME "failed to determine video format of '%s'.\n",
+         grabber->device_name);
+      return -EINVAL;
+   }   
    ambitv_log(ambitv_log_info, LOGNAME "video format: %ux%u (%s).\n",
       vid_fmt.fmt.pix.width, vid_fmt.fmt.pix.height,
       v4l2_string_from_fourcc(vid_fmt.fmt.pix.pixelformat));
